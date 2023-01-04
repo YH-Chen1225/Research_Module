@@ -23,7 +23,7 @@ abline(v = 0)
 a <- rnorm(1,0,1)
 a
 #Data generating process With always taker and never taker
-#Linear_FRD
+#Linear_FRD(Gap should be 9)
 DGF<-function(n,a){
   x<-runif(n,-a,a)
   y<-ifelse(x>=0,3*x+10,3*x+1)
@@ -36,7 +36,7 @@ DGF<-function(n,a){
   return(data)
 }
 
-#Non_Linear_FRD
+#Non_Linear_FRD(Gap should be 49)
 DGF2 <- function(n,a){
   x<-runif(n,-a,a)
   y<-ifelse(x>=0,x^2+50,-x^2+1)
@@ -49,6 +49,20 @@ DGF2 <- function(n,a){
   return(data)
 }
 
+#Third_order_FRD(Gap should be 499)
+DGF3 <- function(n,a){
+  x<-runif(n,-a,a)
+  y<-ifelse(x>=0,x^2+x^3+500,x^2+x^3+1)
+  y<-y+rnorm(n,0,50)
+  w_s<-ifelse(x>=0,1,0)
+  ran<- sample(1:n, n/10, FALSE)
+  for (i in ran){
+    y[i] <- ifelse(x[i]>=0,x[i]^2+x[i]^3+1+rnorm(1,0,50),x[i]^2+x[i]^3+500+rnorm(1,0,50))}
+  data<-data.frame(x,y,w_s)
+  return(data)
+}
+
+
 #Checking the data generating process
 data <- DGF(100,10)
 plot(data$x, data$y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5)
@@ -56,6 +70,10 @@ abline(v = 0)
 
 data2 <- DGF2(100,10)
 plot(data2$x, data2$y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5)
+abline(v = 0)
+
+data3 <- DGF3(100,10)
+plot(data3$x, data3$y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5)
 abline(v = 0)
 
 
@@ -83,7 +101,7 @@ return(mean_kernel)
 }
 
 #DGP can be DGF or DGF2, which is for non-linear simulation
-m <- FRD(100,4,DGP=DGF2,kernel=kernel,n=500)#n cannot be too small
+m <- FRD(100,4,DGP=DGF3,kernel=kernel,n=500)#n cannot be too small
 m
 
 ###Parametric Method
@@ -92,13 +110,13 @@ vars <- c("w_s","data$x_centered","I(x_centered^2)","I(x_centered^3)","I(x_cente
 para <- function(T,vars,c,DGP){
   coe <- matrix(NA,100,4)
   for (i in 1:T){
-    a[i]<-runif(1,min=1,max=20)
+    a[i]<-runif(1,min=1,max=10)
     data<-DGP(n,a[i])
     data$x_centered<-data$x-c
-    for (z in 1:length(vars)-1){
-      formula <- as.formula(paste("data$y",paste(vars[1:z+1],collapse = "+"),sep = "~"))
+    for (z in 1:(length(vars)-1)){
+      formula <- as.formula(paste("y",paste(vars[0:z+1],collapse = "+"),sep = "~"))
       fit <- lm(formula,data=data)
-      coe[i,z] <- fit$coefficients[1]
+      coe[i,z] <- fit$coefficients[2]
     }
   }
   avg <- apply(coe, 2, mean)
@@ -106,8 +124,14 @@ para <- function(T,vars,c,DGP){
 }
 
 ##DGP can be DGF or DGF2, which is for non-linear data generating process
-avg <- para(100,vars=vars,c=0,DGP=DGF2)
+avg <- para(100,vars=vars,c=0,DGP=DGF3)
 avg
+
+
+#Simple testing
+data <- DGF3(100,30)
+fit <- lm(y~w_s+x,data=data)
+fit$coefficients
 
 
 
