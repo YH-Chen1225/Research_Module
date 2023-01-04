@@ -100,7 +100,7 @@ FRD <- function(T,order,n,DGP,kernel){
 return(mean_kernel)
 }
 
-#DGP can be DGF or DGF2, which is for non-linear simulation
+#DGP can be DGF ,DGF2 and DGF3, which is for non-linear simulation
 m <- FRD(100,4,DGP=DGF3,kernel=kernel,n=500)#n cannot be too small
 m
 
@@ -123,8 +123,8 @@ para <- function(T,vars,c,DGP){
   return(avg)
 }
 
-##DGP can be DGF or DGF2, which is for non-linear data generating process
-avg <- para(100,vars=vars,c=0,DGP=DGF3)
+##DGP can be DGF or DGF2 or DGF3, which is for non-linear data generating process
+avg <- para(100,vars=vars,c=0,DGP=DGF)
 avg
 
 
