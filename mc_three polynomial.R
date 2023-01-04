@@ -1,7 +1,7 @@
 rm(list=ls())
-set.seed(122)
+set.seed(124)
 T<-1000
-n<-300
+n<-500
 library(ggplot2)
 library(dplyr)
 library(rdd)
@@ -11,7 +11,7 @@ library(rdrobust)
 ##firstly,the data generating function:
 DGF<-function(n,a){
   x<-runif(n,-a,a)
-  y<-ifelse(x>=0,3*x+10,2*x+1)
+  y<-ifelse(x>=0,x^2+x^3+10,x^2+x^3+1)
   w_s<-ifelse(x>=0,1,0)
   data<-data.frame(x,y,w_s)
   return(data)
@@ -19,7 +19,7 @@ DGF<-function(n,a){
 mean_two<-matrix(NA,4,4)
 ##non-parametric method:
 kernel <- c("triangular","epanechnikov","uniform")
-## we will see the treatment effect when the kernel is triangular:
+## we will see the treatment effect in different kernel:
 for (ker in 1:length(kernel)){
   a<-c()
   np<-matrix(NA,1000,4)
@@ -34,7 +34,6 @@ for (ker in 1:length(kernel)){
   mean_two[ker,1:4] <- c(mean(np[1:1000,1]),mean(np[1:1000,2]),mean(np[1:1000,3]),mean(np[1:1000,4]))
 }
 mean_two
-## we will see the treatment effect when the kernel is epanechnikov:
 ##for the parametric method:
 p_b1<-c()
 p_b2<-c()
@@ -42,7 +41,7 @@ p_b3<-c()
 p_b4<-c()
 c=0
 for (i in 1:T){
-  a[i]<-runif(1,min=1,max=20)
+  a[i]<-runif(1,min=1,max=50)
   data<-DGF(n,a[i])
   data$x_centered<-data$x-c
   fit1<-lm(data$y~data$x_centered+data$w_s,data=data)
@@ -59,5 +58,4 @@ p_b2
 p_b3
 p_b4
 mean_two[4,]<-c(mean(p_b1),mean(p_b2),mean(p_b3),mean(p_b4))
-
 #from this we can see that with the increasing of P, the estimation accuracy becomes higher

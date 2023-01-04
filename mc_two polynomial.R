@@ -1,5 +1,5 @@
 rm(list=ls())
-set.seed(122)
+set.seed(123)
 T<-1000
 n<-300
 library(ggplot2)
@@ -11,15 +11,15 @@ library(rdrobust)
 ##firstly,the data generating function:
 DGF<-function(n,a){
   x<-runif(n,-a,a)
-  y<-ifelse(x>=0,3*x+10,2*x+1)
+  y<-ifelse(x>=0,x^2+10,x^2+1)
   w_s<-ifelse(x>=0,1,0)
   data<-data.frame(x,y,w_s)
   return(data)
 }
 mean_two<-matrix(NA,4,4)
-##non-parametric method:
 kernel <- c("triangular","epanechnikov","uniform")
-## we will see the treatment effect when the kernel is triangular:
+##non-parametric method:
+## we will see the treatment effect in different kernel:
 for (ker in 1:length(kernel)){
   a<-c()
   np<-matrix(NA,1000,4)
@@ -34,7 +34,6 @@ for (ker in 1:length(kernel)){
   mean_two[ker,1:4] <- c(mean(np[1:1000,1]),mean(np[1:1000,2]),mean(np[1:1000,3]),mean(np[1:1000,4]))
 }
 mean_two
-## we will see the treatment effect when the kernel is epanechnikov:
 ##for the parametric method:
 p_b1<-c()
 p_b2<-c()
@@ -54,10 +53,5 @@ for (i in 1:T){
   fit4<-lm(data$y~data$x_centered+I(data$x_centered^2)+I(data$x_centered^3)+I(data$x_centered^4)+w_s,data=data)
   p_b4[i]<-fit4$coefficients[6]
 }
-p_b1
-p_b2
-p_b3
-p_b4
 mean_two[4,]<-c(mean(p_b1),mean(p_b2),mean(p_b3),mean(p_b4))
-
 #from this we can see that with the increasing of P, the estimation accuracy becomes higher
