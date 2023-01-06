@@ -11,9 +11,11 @@ DGF1<-function(n,a){
   y<-ifelse(x>=0,3*x+10,3*x+1)
   y<-y+rnorm(n,0,1)
   w_s<-ifelse(x>=0,1,0)
-  ran<- sample(1:n, n/10, FALSE)
+  ran<- sort(sample(1:n, n/10, FALSE))
   for (i in ran){
-    y[i] <- ifelse(x[i]>=0,3*x[i]+1+rnorm(1,0,1),3*x[i]+10+rnorm(1,0,1))}
+    y[i] <- ifelse(x[i]>=0,3*x[i]+1+rnorm(1,0,1),3*x[i]+10+rnorm(1,0,1))
+    w_s[i]<-ifelse(x[i]>=0,0,1)
+  }
   data<-data.frame(x,y,w_s)
   return(data)
 }
@@ -24,9 +26,11 @@ DGF2 <- function(n,a){
   y<-ifelse(x>=0,x^2+10,-x^2+1)
   y<-y+rnorm(n,0,5)
   w_s<-ifelse(x>=0,1,0)
-  ran<- sample(1:n, n/10, FALSE)
+  ran<-sort(sample(1:n, n/10, FALSE))
   for (i in ran){
-    y[i] <- ifelse(x[i]>=0,x[i]^2+1+rnorm(1,0,5),-x[i]^2+10+rnorm(1,0,5))}
+    y[i] <- ifelse(x[i]>=0,x[i]^2+1+rnorm(1,0,5),-x[i]^2+10+rnorm(1,0,5))
+    w_s[i]<-ifelse(x[i]>=0,0,1)
+  }
   data<-data.frame(x,y,w_s)
   return(data)
 }
@@ -37,9 +41,11 @@ DGF3 <- function(n,a){
   y<-ifelse(x>=0,x^2+x^3+10,x^2+x^3+1)
   y<-y+rnorm(n,0,20)
   w_s<-ifelse(x>=0,1,0)
-  ran<- sample(1:n, n/10, FALSE)
+  ran<- sort(sample(1:n, n/10, FALSE))
   for (i in ran){
-    y[i] <- ifelse(x[i]>=0,x[i]^2+x[i]^3+1+rnorm(1,0,20),x[i]^2+x[i]^3+10+rnorm(1,0,20))}
+    y[i] <- ifelse(x[i]>=0,x[i]^2+x[i]^3+1+rnorm(1,0,20),x[i]^2+x[i]^3+10+rnorm(1,0,20))
+    w_s[i]<-ifelse(x[i]>=0,0,1)
+  }
   data<-data.frame(x,y,w_s)
   return(data)
 }
@@ -48,9 +54,11 @@ DGF4<-function(n,a){
   y<-ifelse(x>=0,x^2+x^3+x^4+10,x^2+x^3+x^4+1)
   y<-y+rnorm(n,0,50)
   w_s<-ifelse(x>=0,1,0)
-  ran<- sample(1:n, n/10, FALSE)
+  ran<- sort(sample(1:n, n/10, FALSE))
   for (i in ran){
-    y[i] <- ifelse(x[i]>=0,x[i]^2+x[i]^3+x[i]^4+1+rnorm(1,0,50),x[i]^2+x[i]^3+x[i]^4+10+rnorm(1,0,50))}
+    y[i] <- ifelse(x[i]>=0,x[i]^2+x[i]^3+x[i]^4+1+rnorm(1,0,50),x[i]^2+x[i]^3+x[i]^4+10+rnorm(1,0,50))
+    w_s[i]<-ifelse(x[i]>=0,0,1)
+  }
   data<-data.frame(x,y,w_s)
   return(data)
 }
@@ -65,7 +73,7 @@ FRD <- function(T,order,n,DGP,kernel){
     np<-matrix(NA,T,order)
     for (i in 1:T){
       for (k in 1:order){
-        a[i]<-runif(1,min=1,max=10)
+        a[i]<-runif(1,min=1,max=20)
         data<-DGP(n,a[i])
         locfit<-rdrobust(data$y,data$x,fuzzy=data$w_s,p=k,c=0,kernel=kernel[ker])
         np[i,k]<-locfit$coef[1]
@@ -76,12 +84,11 @@ FRD <- function(T,order,n,DGP,kernel){
   }
   return(mean_kernel)
 }
-
 #DGP can be DGF1,DGF2,DGF3 and DGF4.
-#then we can use the above fuction to calculate the treatment effect in different kernel:
+#then we can use the above function to calculate the treatment effect in different kernel:
 T<-1000
 p<-4
-n<-300
+n<-600
 #I hope I can think a way to make the below codes simpler.
 mean1<-matrix(NA,3,p)#mean1 is the mean value of the treatment effect in 1-polynomial 
 for (i in 1:3){
@@ -118,5 +125,8 @@ para <- function(T,vars,c,DGP){
   avg <- apply(coe, 2, mean)
   return(avg)
 }
-avg<-para(T,vars=vars,c=0,DGP=DGF1)
-avg
+avg1<-para(T,vars=vars,c=0,DGP=DGF1)
+avg1
+avg2<-para(T,vars=vars,c=0,DGP=DGF2)
+avg2
+##this shows that when the polynomial is larger ,using parametric way is not so precise.
