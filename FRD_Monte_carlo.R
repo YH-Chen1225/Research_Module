@@ -1,4 +1,4 @@
-set.seed(122)
+set.seed(1221126)
 library(ggplot2)
 library(dplyr)
 library(rdd)
@@ -7,29 +7,30 @@ library(rddensity)
 library(rdrobust)
 library(MuMIn)
 
-x<-runif(100,-2,2)
-ran<- sample(0:100, 10, TRUE)
-y<-ifelse(x>=0,3*x+10,3*x+1)#from here we know that the treatment affect should be 9
-
-for (i in ran){
-  if (x[i] <= 0){
-    y[i] = 3*x[i]+10
-  }
-  else {y[i] = 3*x[i]+1}
-}
-plot(x, y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5)
-abline(v = 0)
+# x<-runif(100,-2,2)
+# ran<- sample(0:100, 10, TRUE)
+# y<-ifelse(x>=0,x+10,x+1)#from here we know that the treatment affect should be 9
+# 
+# for (i in ran){
+#   if (x[i] <= 0){
+#     y[i] = 3*x[i]+10
+#   }
+#   else {y[i] = 3*x[i]+1}
+# }
+# plot(x, y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5)
+# abline(v = 0)
 
 #Data generating process With always taker and never taker
 #Linear_FRD
 DGF1<-function(n,a,gap){
   x<-runif(n,-a,a)
-  y<-ifelse(x>=0,3*x+1+gap,3*x+1)
+  y<-ifelse(x>=0,x+1+gap,x+1)
   y<-y+rnorm(n,0,1)
   w_s<-ifelse(x>=0,1,0)
   ran<- sort(sample(1:n, n/10, FALSE))
   for (i in ran){
-    y[i] <- ifelse(x[i]>=0,3*x[i]+1+rnorm(1,0,1),3*x[i]+1+gap+rnorm(1,0,1))
+    y[i] <- ifelse(x[i]>=0,x[i]+1+rnorm(1,0,1),
+                   x[i]+1+gap+rnorm(1,0,1))
     w_s[i]<-ifelse(x[i]>=0,0,1)
   }
   data<-data.frame(x,y,w_s)
@@ -44,7 +45,8 @@ DGF2 <- function(n,a,gap){
   w_s<-ifelse(x>=0,1,0)
   ran<-sort(sample(1:n, n/10, FALSE))
   for (i in ran){
-    y[i] <- ifelse(x[i]>=0,x[i]^2+1+rnorm(1,0,5),-x[i]^2+1+gap+rnorm(1,0,5))
+    y[i] <- ifelse(x[i]>=0,x[i]^2+1+rnorm(1,0,5),
+                   -x[i]^2+1+gap+rnorm(1,0,5))
     w_s[i]<-ifelse(x[i]>=0,0,1)
   }
   data<-data.frame(x,y,w_s)
@@ -59,7 +61,8 @@ DGF3 <- function(n,a,gap){
   w_s<-ifelse(x>=0,1,0)
   ran<- sort(sample(1:n, n/10, FALSE))
   for (i in ran){
-    y[i] <- ifelse(x[i]>=0,x[i]^2+x[i]^3+1+rnorm(1,0,20),x[i]^2+x[i]^3+gap+rnorm(1,0,20))
+    y[i] <- ifelse(x[i]>=0,x[i]^2+x[i]^3+1+rnorm(1,0,20),
+                   x[i]^2+x[i]^3+gap+rnorm(1,0,20))
     w_s[i]<-ifelse(x[i]>=0,0,1)
   }
   data<-data.frame(x,y,w_s)
@@ -69,12 +72,13 @@ DGF3 <- function(n,a,gap){
 #Fourth_order_FRD
 DGF4<-function(n,a,gap){
   x<-runif(n,-a,a)
-  y<-ifelse(x>=0,x^2+x^3+x^4+1+gap,x^2+x^3+x^4+1)
+  y<-ifelse(x>=0,x^2+x^3+x^4+1+gap,-x^2+x^3-x^4+1)
   y<-y+rnorm(n,0,50)
   w_s<-ifelse(x>=0,1,0)
   ran<- sort(sample(1:n, n/10, FALSE))
   for (i in ran){
-    y[i] <- ifelse(x[i]>=0,x[i]^2+x[i]^3+x[i]^4+1+rnorm(1,0,50),x[i]^2+x[i]^3+x[i]^4+1+gap+rnorm(1,0,50))
+    y[i] <- ifelse(x[i]>=0,x[i]^2+x[i]^3+x[i]^4+1+rnorm(1,0,50),
+                   -x[i]^2+x[i]^3-x[i]^4+1+gap+rnorm(1,0,50))
     w_s[i]<-ifelse(x[i]>=0,0,1)
   }
   data<-data.frame(x,y,w_s)
@@ -82,74 +86,87 @@ DGF4<-function(n,a,gap){
 }
 
 
-#Checking the data generating process
-data <- DGF1(100,10,10)
-plot(data$x, data$y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5)
+# #Checking the data generating process
+data <- DGF1(100,10,9)
+plot(data$x, data$y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5,
+     main="DGF1(n=100,a=10,gap=9)")
 abline(v = 0)
-
-data2 <- DGF2(100,10,50)
-plot(data2$x, data2$y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5)
+# loc<-rdrobust(data$y,data$x,fuzzy=data$w_s,p=1,c=0,kernel="uniform")
+# loc$bws[1,]
+data2 <- DGF2(100,10,99)
+plot(data2$x, data2$y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5,
+    main="DGF2(n=100,a=10,gap=99)" )
 abline(v = 0)
-
-data3 <- DGF3(100,10,500)
-plot(data3$x, data3$y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5)
-abline(v = 0)
-
+# 
+# data3 <- DGF3(100,10,199)
+# plot(data3$x, data3$y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5,
+#      main="DGF3(n=100,a=10,gap=199)")
+# abline(v = 0)
+# 
+# data4 <- DGF4(100,10,999)
+# plot(data4$x, data4$y, xlab = "x", ylab = "y", pch = 20, cex.axis = 1.5, cex.lab = 1.5,
+#      main="DGF4(n=100,a=10,gap=999)")
+# abline(v = 0)
 
 #Preparation for Monte Carlo
 kernel <- c("triangular","epanechnikov","uniform")
 
 #Monte Carlo simulation
 FRD <- function(T,order,n,DGP,kernel,gap){
-  mean_kernel <- matrix(NA,length(kernel),order)  
+  mse_kernel <- matrix(NA,length(kernel),order)  
   for (ker in 1:length(kernel)){
     a<-c()
     np<-matrix(NA,T,order)
     for (i in 1:T){
       for (k in 1:order){
-        a[i]<-runif(1,min=1,max=10)
+        a[i]<-20
         data<-DGP(n,a[i],gap)
         locfit<-rdrobust(data$y,data$x,fuzzy=data$w_s,p=k,c=0,kernel=kernel[ker])
         np[i,k]<-locfit$coef[1]
       }
   }
     for (z in 1:order){
-    mean_kernel[ker,z] <- mean((np[1:T,z]-gap)^2)}
+    mse_kernel[ker,z] <- mean((np[1:T,z]-gap)^2)}
+      #sqrt(mean((np[1:T,z]-gap)^2))/mean(np[1:T,z])}
   }
-return(mean_kernel)
+return(mse_kernel)
 }
 
-#DGP can be DGF ,DGF2 and DGF3, which is for non-linear simulation
-m_1_1 <- FRD(1000,4,DGP=DGF1,kernel=kernel,n=700,gap = 1)#n cannot be too small
-m_1_1
-mean_1_1 <- apply(m_1_1,2,mean)
-mean_1_1
-
-m_1_2 <- FRD(1000,4,DGP=DGF1,kernel=kernel,n=800,gap = 0.1)#n cannot be too small
-m_1_2
-mean_1_2 <- apply(m_1_2,2,mean)
-mean_1_2
-
-m_1_3 <- FRD(1000,4,DGP=DGF1,kernel=kernel,n=800,gap = 0.01)#n cannot be too small
-m_1_3
-mean_1_3 <- apply(m_1_3,2,mean)
-mean_1_3
+#DGP can be DGF1,DGF2,DGF3 and DGF4, which is for non-linear simulation
+mse_f1<- FRD(1000,4,DGP=DGF1,kernel=kernel,n=1000,gap = 9)#n cannot be too small
+mse_f2<- FRD(1000,4,DGP=DGF2,kernel=kernel,n=1000,gap = 9)
+mse_f3<- FRD(1000,4,DGP=DGF3,kernel=kernel,n=1000,gap = 9)
+mse_f4<- FRD(1000,4,DGP=DGF4,kernel=kernel,n=1000,gap = 9)
 
 
-m_1_4 <- FRD(1000,4,DGP=DGF1,kernel=kernel,n=800,gap = 0.001)#n cannot be too small
-m_1_4
-mean_1_4 <- apply(m_1_4,2,mean)
-mean_1_4
+###########different polynomial :
+n_f<-seq(1000,10000,by=1000)
+p=4
+# mse_nf_t<-matrix(NA,length(n_f),4)
+mse_nf_e<-matrix(NA,length(n_f),4)
+# mse_nf_u<-matrix(NA,length(n_f),4)
+for (i in 1:length(n_f)){
+  # mse_nf_t[i,]<-FRD(1000,p,n_f[i],DGF1,kernel[1],gap=9)
+  mse_nf_e[i,]<-FRD(1000,p,n_f[i],DGF4,kernel[2],gap=9)
+  # mse_nf_u[i,]<-FRD(1000,p,n_f[i],DGF1,kernel[3],gap=9)
+}
 
-m_1_5 <- FRD(1000,4,DGP=DGF1,kernel=kernel,n=800,gap = 0.0001)#n cannot be too small
-m_1_5
-mean_1_5 <- apply(m_1_5,2,mean)
-mean_1_5
 
-m_1_6 <- FRD(1000,4,DGP=DGF1,kernel=kernel,n=800,gap = 0.00001)#n cannot be too small
-m_1_6
-mean_1_6 <- apply(m_1_6,2,mean)
-mean_1_6
+
+
+
+
+########
+########find the critical value of the gap:
+gap_s<-c(1,0.1,0.01,0.001,0.0001,0.00001,0.000001,0.0000001,0.00000001,0.000000001,0.0000000001)
+##for DGF1:
+m_f2_1<-matrix(NA,length(gap_s),4)
+m_f2_2<-matrix(NA,length(gap_s),4)
+m_f2_3<-matrix(NA,length(gap_s),4)
+m_f2_4<-matrix(NA,length(gap_s),4)
+for (i in 1:length(gap_s)){
+  m_f2_4[i,]=FRD(1000,4,DGP=DGF4,kernel=kernel[2],n=1000,gap = gap_s[i])#n cannot be too small
+}
 
 
 ###Parametric Method
@@ -171,25 +188,12 @@ para <- function(T,vars,c,DGP,gap,n){
   mse <- apply(sqr,2,mean)
   return(mse)
 }
-
-
-apply(coe, 2, mean)
 ##DGP can be DGF or DGF2 or DGF3, which is for non-linear data generating process
-mse <- para(1000,vars=vars,c=0,DGP=DGF1,gap = 1,n=800)
-mse
-
-mse2 <- para(1000,vars=vars,c=0,DGP=DGF1,gap = 0.1,n=800)
-mse2
-
-mse3 <- para(1000,vars=vars,c=0,DGP=DGF1,gap = 0.01,n=800)
-mse3
-
-mse4 <- para(1000,vars=vars,c=0,DGP=DGF1,gap = 0.001,n=800)
-mse4
-
-mse5 <- para(1000,vars=vars,c=0,DGP=DGF1,gap = 0.0001,n=800)
-mse5
-
+avg_f<-matrix(NA,4,4) 
+avg_f[1,]<- para(T,vars=vars,c=0,DGP=DGF1,gap=9,n=1000)
+avg_f[2,]<- para(T,vars=vars,c=0,DGP=DGF2,gap=9,n=1000)
+avg_f[3,]<- para(T,vars=vars,c=0,DGP=DGF3,gap=9,n=1000)
+avg_f[4,]<- para(T,vars=vars,c=0,DGP=DGF4,gap=9,n=1000)
 
 #Simple testing
 data <- DGF3(100,30)
